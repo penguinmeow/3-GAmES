@@ -800,7 +800,7 @@ rm $ovalue/coverage/*
 		echo "the rnaseq directory does not exist. Running the analysis without intergenic end identification" >>  "$ovalue"/"$Condition".txt  
 		singularity exec "$PIPELINE"/bin/dependencies_latest.sif Rscript  --slave -e "BOut='$ovalue';source('"$PIPELINE"/scripts/writePassingNonOverlappingEnds.R')"
 		singularity exec "$PIPELINE"/bin/dependencies_latest.sif bedtools sort -i "$ovalue"/polyAmapping_allTimepoints/n_100_global_a0/nonOverlapping_total_passing.bed > "$ovalue"/polyAmapping_allTimepoints/n_100_global_a0/nonOverlapping_total_passing_sorted.bed
-		singularity exec "$PIPELINE"/bin/dependencies_latest.sif bedtools closest -d -s -io   -a "$ovalue"/polyAmapping_allTimepoints/n_100_global_a0/nonOverlapping_total_passing_sorted.bed -b "$ovalue"/intergenicPeaks/toExtend_longestEnsembl_refSeq_n100_sorted_distances.bed > "$ovalue"/intergenicPeaks/intergenicPeaks_noRNAseq.bed
+		singularity exec "$PIPELINE"/bin/dependencies_latest.sif bedtools closest -d -s -io   -a "$ovalue"/polyAmapping_allTimepoints/n_100_global_a0/nonOverlapping_total_passing_sorted.bed -b "$ovalue"/intergenicPeaks/toExtend_longestEnsembl_refSeq_n100_sorted_distances.bed | cat - > "$ovalue"/intergenicPeaks/intergenicPeaks_noRNAseq.bed
 
 
 	fi
