@@ -1,0 +1,16 @@
+2022-03-18
+running danio rerio test data 
+error on slamdunk filter part:
+  File "/usr/local/lib/python2.7/dist-packages/pysam/utils.py", line 75, in __call__
+    stderr))
+pysam.utils.SamtoolsError: 'samtools returned with error 1: stdout=, stderr=samtools index: failed to create index for "/home/xzhen/SLAM-seqTutorial/3-GAmES/testdata/output/polyAmapping_allTimepoints/n_100_global_a0/SRR11282030.fastq_5primetrimmed_trimmed_sizefiltered_polyAreads_polyAremoved_slamdunk_mapped_filtered.bam": Numerical result out of range\n'
+
+Solution1: 
+Installing newest version of slamdunk (0.4.3) 
+Using new slamdunk, running filter step.
+Sadly same error occurs.
+
+Trouble shooting:
+1. Following suggestion here.
+https://github.com/samtools/samtools/issues/1118
+
