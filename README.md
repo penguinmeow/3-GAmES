@@ -11,6 +11,8 @@ Please make sure the singularity version you have is > 3.0.
 
 	cd 3-GAmES/bin
 	run the script "getDependencies.sh"
+	In this step, we'll load singularity from HPCF, then pull singularity image: (1) dependencies_latest.sif ; (2) slamdunk_v0.3.4.sif
+
 
 ## Description
 the main steps involved in the pipeline are outlined :
