@@ -24,3 +24,6 @@ samtools view SRR11282030.fastq_5primetrimmed_trimmed_sizefiltered_polyAreads_po
 # 78093715
 
 Didn't find the real solution yet.
+
+2. Good news is, the same pre-processing pipeline works for my real data (mm10). 
+For the above mentioned samtools issue, a method I can think of is installing the newest version of nextgenerationsmapping and break down the slamdunk - mapping & filtering pipeline.
