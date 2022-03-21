@@ -19,6 +19,9 @@ the main steps involved in the pipeline are outlined :
 [The main steps of the pipeline are outlined here](primingSites/flowchart.pdf).
 A description of the different steps outlined can be found in the wiki.
 
+Input raw files include SLAM-Seq and RNA-seq data.
+For example, the SLAM-seq data in our test dataset is Zebra fish 1 day post fertilization (Pharyngula period of embryo development, according to PMID: 8589427) embryo. Total RNA was isolated and librarby were prepared using QuantSeq Kit.
+The RNA-seq data in test dataset are zebrafish embryos collected at 1-cell stage (Zygote period) then strand-specific libraries for 76 bp paired-end sequencing were prepared, sequenced with Illumina HiSeq 2000.
 
 
 ## Requirements
