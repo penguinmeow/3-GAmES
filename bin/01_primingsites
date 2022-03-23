@@ -1,0 +1,60 @@
+#################### identification of priming sites...
+
+
+
+	cat $QUANT_MAP/*_bamTobed_minusStrand.bed | awk -vFS="\t" '{print $1,$2}'  | sort | uniq -c | perl -pe 's#^\s+##'  > $QUANT_MAP/polyAreads_polyAremoved_pooled_slamdunk_mapped_filtered_bamTobed_minusStrand_countsUnique.bed
+
+	cat $QUANT_MAP/*_bamTobed_plusStrand.bed | awk  -vFS="\t" '{print $1,$3}' | sort | uniq -c | perl -pe 's#^\s+##' > $QUANT_MAP/polyAreads_polyAremoved_pooled_slamdunk_mapped_filtered_bamTobed_plusStrand_countsUnique.bed
+
+
+	onPositive=$(wc -l  "$QUANT_MAP"/polyAreads_polyAremoved_pooled_slamdunk_mapped_filtered_bamTobed_plusStrand_countsUnique.bed)
+	onNegative=$(wc -l  "$QUANT_MAP"/polyAreads_polyAremoved_pooled_slamdunk_mapped_filtered_bamTobed_minusStrand_countsUnique.bed)
+
+
+
+	awk -vT=$threshold '{ if ($1 >=T) print  }' "$QUANT_MAP"/polyAreads_polyAremoved_pooled_slamdunk_mapped_filtered_bamTobed_minusStrand_countsUnique.bed >"$QUANT_MAP"/polyAreads_polyAremoved_pooled_slamdunk_mapped_filtered_bamTobed_minusStrand_countsUnique_greaterThan"$threshold".bed
+
+	awk -vT=$threshold '{ if ($1 >=T) print  }' "$QUANT_MAP"/polyAreads_polyAremoved_pooled_slamdunk_mapped_filtered_bamTobed_plusStrand_countsUnique.bed >"$QUANT_MAP"/polyAreads_polyAremoved_pooled_slamdunk_mapped_filtered_bamTobed_plusStrand_countsUnique_greaterThan"$threshold".bed
+
+
+	awk -vOFS="\t" '{print $2, $3-1, $3, $1}' $QUANT_MAP"/polyAreads_polyAremoved_pooled_slamdunk_mapped_filtered_bamTobed_plusStrand_countsUnique_greaterThan"$threshold".bed" | sort -k1,1 -k2,2n  > "$QUANT_MAP"/polyAreads_polyAremoved_pooled_slamdunk_mapped_filtered_bamTobed_plusStrand_countsUnique_greaterThan"$threshold".bed_sorted.bed_changedCoordinates.bed
+
+	awk -vOFS="\t" '{print $2, $3, $3+1, $1}' $QUANT_MAP"/polyAreads_polyAremoved_pooled_slamdunk_mapped_filtered_bamTobed_minusStrand_countsUnique_greaterThan"$threshold".bed" | sort -k1,1 -k2,2n  > "$QUANT_MAP"/polyAreads_polyAremoved_pooled_slamdunk_mapped_filtered_bamTobed_minusStrand_countsUnique_greaterThan"$threshold".bed_sorted.bed_changedCoordinates.bed
+
+
+
+
+ singularity exec "$PIPELINE"/bin/dependencies_latest.sif bedtools merge -d 0 -i "$QUANT_MAP"/polyAreads_polyAremoved_pooled_slamdunk_mapped_filtered_bamTobed_minusStrand_countsUnique_greaterThan"$threshold".bed_sorted.bed_changedCoordinates.bed -c 4 -o count,collapse >   "$QUANT_MAP"/polyAreads_polyAremoved_pooled_slamdunk_mapped_filtered_bamTobed_minusStrand_countsUnique_greaterThan"$threshold".bed_sorted_merged.bed
+
+		if [ $? -eq 0 ]
+		               then
+				         echo ""
+			else
+				echo " ERR: bedtools merge failed">> "$ovalue"/"$Condition".txt
+				 exit 1
+		fi
+
+
+    singularity exec "$PIPELINE"/bin/dependencies_latest.sif  bedtools merge  -d 0  -i "$QUANT_MAP"/polyAreads_polyAremoved_pooled_slamdunk_mapped_filtered_bamTobed_plusStrand_countsUnique_greaterThan"$threshold".bed_sorted.bed_changedCoordinates.bed -c 4 -o count,collapse > "$QUANT_MAP"/polyAreads_polyAremoved_pooled_slamdunk_mapped_filtered_bamTobed_plusStrand_countsUnique_greaterThan"$threshold".bed_sorted_merged.bed
+
+
+		if [ $? -eq 0 ]
+		               then
+				         echo ""
+			else
+				echo " ERR: bedtools merge failed">> "$ovalue"/"$Condition".txt
+				 exit 1
+		fi
+
+
+
+
+		  ###### putting a stop sign here...
+
+		  if [ $STOP ==  "primingsites" ]
+			then
+			echo "Priming sites identified..." >> "$ovalue"/"$Condition".txt
+			exit 1
+		else
+			echo " "  >> "$ovalue"/"$Condition".txt
+		fi
