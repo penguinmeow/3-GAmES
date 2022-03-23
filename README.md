@@ -93,7 +93,7 @@ run_3GAmES.sh -a [adapter] -i [input directory] -o [output directory] -g [genome
 	
 	-p path to the 3-GAmES folder
 
-	-s step after which pipeline will stop [options: preprocessing, primingsites, intergenicends, all]
+	-s step after which pipeline will stop [options: preprocessing, internalpriming, primingsites, intergenicends, all]
 
 
 example: run_3GAmES.sh -a AGATCGGAAGAGCACACGTCTGAACTCCAGTCACNNNNNNATCTCGTATGCCGTCTTCTGCTTG -i xcondition_input/ -o xcondition_output/ -g danio_rerio/dr11/danRer11.fa -t 2  -e annotations_all/ -m p -c trialSample -p /scratch/3-GAmES -s all
