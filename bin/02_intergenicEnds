@@ -1,0 +1,215 @@
+
+
+
+
+
+
+
+######################################
+###3 getting the sequences +/- 60 nts around the priming sites...
+######################################
+
+
+
+singularity exec "$PIPELINE"/bin/dependencies_latest.sif  Rscript  --vanilla $PIPELINE/scripts/overlappingPolyApeaks.R "$QUANT_MAP"/polyAreads_polyAremoved_pooled_slamdunk_mapped_filtered_bamTobed_plusStrand_countsUnique_greaterThan"$threshold".bed_sorted_merged.bed "$QUANT_MAP"/polyAreads_polyAremoved_pooled_slamdunk_mapped_filtered_bamTobed_minusStrand_countsUnique_greaterThan"$threshold".bed_sorted_merged.bed "$QUANT_MAP"/peaks_"$threshold"_120bps.bed "$QUANT_MAP"/sizes.genome
+
+		if [ $? -eq 0 ]
+		               then
+				         echo ""
+			else
+				echo " ERR: the script overlappingPolyApeaks returned an error">> "$ovalue"/"$Condition".txt
+				 exit 1
+		fi
+
+
+
+singularity exec "$PIPELINE"/bin/dependencies_latest.sif  bedtools getfasta -s -fi $genome -bed "$QUANT_MAP"/peaks_"$threshold"_120bps.bed -fo "$QUANT_MAP"/peaks_"$threshold"_120bps.fa 2>"$LOG"/stderr_"$index".txt
+
+	if [ $? -eq 0 ]
+		               then
+				         echo ""
+			else
+				echo " ERR: bedtools getfasta failed">> "$ovalue"/"$Condition".txt
+				 exit 1
+		fi
+
+
+
+#### getting sequences in the 120 nucleotide window
+
+rmd="$PIPELINE/scripts/sequencesForNucleotideProfile.R"
+
+	singularity exec "$PIPELINE"/bin/dependencies_latest.sif  Rscript --vanilla -e "InPath='$QUANT_MAP';threshold="$threshold";source('$rmd')"
+
+			if [ $? -eq 0 ]
+		               then
+				         echo ""
+			else
+				echo " ERR: the script sequencesForNucleotideProfile.R returned an error">> "$ovalue"/"$Condition".txt
+				 exit 1
+		fi
+
+
+#####################
+#### creating nucleotie profile plots...
+
+
+rmd="$PIPELINE/scripts/nucleotideProfiles_markdown.new.R"
+
+ singularity exec "$PIPELINE"/bin/dependencies_latest.sif  Rscript --slave -e "PPath='$PIPELINE'; InPath='$QUANT_MAP'; OutPath='$QUANT_PASPLOTS'; ensemblDir='$ensembldir';source('$rmd')"
+
+					if [ $? -eq 0 ]
+		               then
+				         echo ""
+			else
+				echo " ERR: the script nucleotideProfiles_markdown.new returned an error">> "$ovalue"/"$Condition".txt
+				 exit 1
+		fi
+
+
+
+ 	printf "\n" >> "$ovalue"/"$Condition".txt
+	echo "Nucleotide profiles to check for internal priming..." >> "$ovalue"/"$Condition".txt
+
+#### Another stop sign here..
+	    if [ $STOP ==  "internalpriming" ]
+		then
+		echo "Internal priming sites removed..." >> "$ovalue"/"$Condition".txt
+		exit 1
+	else
+		echo " "  >> "$ovalue"/"$Condition".txt
+	fi
+
+
+
+############# #######
+#### addin intergenic peak information
+######################
+
+### removing old coverage files
+
+
+echo "Finding intergenic ends... this will take some time....." >> "$ovalue"/"$Condition".txt
+
+rm $ovalue/coverage/*
+
+
+
+	#### checking if the directory exists...if RNAseq folder exists, check the bam and bai files...
+
+
+
+	if [ -d "$ivalue"/rnaseq/ ]; then
+
+		echo "using the RNAseq samples in the folder $ivalue/rnaseq/ "
+
+			if ls "$ivalue"/rnaseq/*.bam 2> /dev/null | grep . > /dev/null; then
+				  echo "bam files exist" >> "$ovalue"/"$Condition".txt
+			else
+				echo "bam files of RNAseq are missing. Please check "$ivalue"/rnaseq/ " >> "$ovalue"/"$Condition".txt
+				exit 1
+			fi
+
+			if ls "$ivalue"/rnaseq/*.bai 2> /dev/null | grep . > /dev/null; then
+				echo "bam indices exist" >> "$ovalue"/"$Condition".txt
+
+			else
+					echo " bam files dont seem to be indexed, performing indexing " >> "$ovalue"/"$Condition".txt
+
+					cd "$ivalue"/rnaseq/
+					for bamfile in *.bam
+						do
+							singularity exec "$PIPELINE"/bin/dependencies_latest.sif  /usr/bin/samtools-1.9/samtools index "$bamfile"
+						done
+			fi
+
+		rmd="$PIPELINE/scripts/getLongestUTR.R"
+
+		singularity exec "$PIPELINE"/bin/dependencies_latest.sif  Rscript --slave -e "PPath='$PIPELINE'; InPath='$QUANT_MAP'; OutPath='$QUANT_INTERGENIC'; ensemblDir='$ensembldir';source('$rmd')"
+
+			 if [ $? -eq 0 ]
+			then
+				echo ""
+			else
+				echo " ERR: the script getLongestUTR returned an error">> "$ovalue"/"$Condition".txt
+				exit 1
+			fi
+
+		sort -k1,1 -k2,2n $QUANT_INTERGENIC/allExons_refSeq_ensembl.bed > $QUANT_INTERGENIC//allExons_refSeq_ensembl_sorted.bed
+
+		  ### this is the bed file of the most distal 3' position per gene.
+
+		sort -k1,1 -k2,2n $QUANT_INTERGENIC/toExtend_longestEnsembl_refSeq_n100.bed > $QUANT_INTERGENIC/toExtend_longestEnsembl_refSeq_n100_sorted.bed
+
+		 ##### we want to calculate the distance between the most distal 3' end per gene and the next annotation (ensembl), to prevent considering RNAseq singal coming from another annotation.
+
+		         singularity exec "$PIPELINE"/bin/dependencies_latest.sif  bedtools closest -d -s -io -iu -D a -a $QUANT_INTERGENIC/toExtend_longestEnsembl_refSeq_n100_sorted.bed -b $QUANT_INTERGENIC/allExons_refSeq_ensembl_sorted.bed > $QUANT_INTERGENIC/toExtend_longestEnsembl_refSeq_n100_sorted_distances.bed
+
+
+			if [ $? -eq 0 ]
+				    then
+					echo ""
+				    else
+					echo " ERR: bedtools closest returned an error">> "$ovalue"/"$Condition".txt
+				   exit 1
+			fi
+
+			  ## adding intergenic peaks
+
+			  source $PIPELINE/scripts/intergenicPeakId.sh
+
+
+			if [ $? -eq 0 ]; then
+						echo ""
+				else
+					echo " ERR: intergenicPeakId returned an error">> "$ovalue"/"$Condition".txt
+				exit 1
+			fi
+
+	else
+
+		  rmd="$PIPELINE/scripts/getLongestUTR.R"
+
+	                singularity exec "$PIPELINE"/bin/dependencies_latest.sif  Rscript --slave -e "PPath='$PIPELINE'; InPath='$QUANT_MAP'; OutPath='$QUANT_INTERGENIC'; ensemblDir='$ensembldir';source('$rmd')"
+
+		                         if [ $? -eq 0 ]
+					       then
+								echo ""
+						else
+							echo " ERR: the script getLongestUTR returned an error">> "$ovalue"/"$Condition".txt
+						exit 1
+					fi
+  	sort -k1,1 -k2,2n $QUANT_INTERGENIC/allExons_refSeq_ensembl.bed > $QUANT_INTERGENIC//allExons_refSeq_ensembl_sorted.bed
+
+                  ### this is the bed file of the most distal 3' position per gene.
+	sort -k1,1 -k2,2n $QUANT_INTERGENIC/toExtend_longestEnsembl_refSeq_n100.bed > $QUANT_INTERGENIC/toExtend_longestEnsembl_refSeq_n100_sorted.bed
+
+			                 ##### we want to calculate the distance between the most distal 3' end per gene and the next annotation (ensembl), to prevent considering RNAseq singal coming from another annotation.
+
+				  singularity exec "$PIPELINE"/bin/dependencies_latest.sif  bedtools closest -d -s -io -iu -D a -a $QUANT_INTERGENIC/toExtend_longestEnsembl_refSeq_n100_sorted.bed -b $QUANT_INTERGENIC/allExons_refSeq_ensembl_sorted.bed > $QUANT_INTERGENIC/toExtend_longestEnsembl_refSeq_n100_sorted_distances.bed
+
+
+
+
+
+		echo "the rnaseq directory does not exist. Running the analysis without intergenic end identification" >>  "$ovalue"/"$Condition".txt
+		singularity exec "$PIPELINE"/bin/dependencies_latest.sif Rscript  --slave -e "BOut='$ovalue';source('"$PIPELINE"/scripts/writePassingNonOverlappingEnds.R')"
+		singularity exec "$PIPELINE"/bin/dependencies_latest.sif bedtools sort -i "$ovalue"/polyAmapping_allTimepoints/n_100_global_a0/nonOverlapping_total_passing.bed > "$ovalue"/polyAmapping_allTimepoints/n_100_global_a0/nonOverlapping_total_passing_sorted.bed
+		singularity exec "$PIPELINE"/bin/dependencies_latest.sif bedtools closest -d -s -io   -a "$ovalue"/polyAmapping_allTimepoints/n_100_global_a0/nonOverlapping_total_passing_sorted.bed -b "$ovalue"/intergenicPeaks/toExtend_longestEnsembl_refSeq_n100_sorted_distances.bed | cat - > "$ovalue"/intergenicPeaks/intergenicPeaks_noRNAseq.bed
+
+
+	fi
+
+
+
+
+#### Another stop sign here..
+
+
+	if [ $STOP ==  "intergenicends" ]
+		    then
+			echo "Internal priming sites removed..." >> "$ovalue"/"$Condition".txt
+			exit 1
+		else
+			echo " "  >> "$ovalue"/"$Condition".txt
+			fi
