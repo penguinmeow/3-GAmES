@@ -238,7 +238,7 @@ if ls "$ivalue"/rnaseq/*.bam 2> /dev/null | grep . > /dev/null; then
 if ls "$ivalue"/rnaseq/*.bai 2> /dev/null | grep . > /dev/null; then
 	                   echo "bam indices exist" >> "$ovalue"/"$Condition".txt
 			              else
-		echo " Seems like there are no bam files, running 3'GAmES without intergnic end identification " >> "$ovalue"/"$Condition".txt  
+		echo " Seems like there are no bai files, we can continue and finished intergenic end identification and do indexing for you, or just running 3'GAmES without intergnic end identification " >> "$ovalue"/"$Condition".txt  
 	fi
 
 echo "Input data exists! Last checks in progress...."  >> "$ovalue"/"$Condition".txt
