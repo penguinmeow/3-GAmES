@@ -226,7 +226,6 @@ if ls "$ivalue"/quantseq/*.{gz,fastq,fq} 2> /dev/null | grep . > /dev/null; then
 
 if ls "$ivalue"/rnaseq/*.bam 2> /dev/null | grep . > /dev/null; then
 	           echo "bam files exist" >> "$ovalue"/"$Condition".txt
-		  
 		      else
 			   echo " Seems like there are no bam files, running 3'GAmES without intergnic end identification " >> "$ovalue"/"$Condition".txt
 		 fi
@@ -402,9 +401,9 @@ while read index; do
 	
 	       if [ $? -eq 0 ]
 		               then
-				         echo "                  5' nucleotides trimmed" >> "$ovalue"/"$Condition".txt
+				         echo "5' nucleotides trimmed" >> "$ovalue"/"$Condition".txt
 			else
-				echo "                  5' trimming failed for "$index" " >> "$ovalue"/"$Condition".txt
+				echo "5' trimming failed for "$index" " >> "$ovalue"/"$Condition".txt
 				 exit 1  
 		fi
 
@@ -431,9 +430,9 @@ while read index; do
 	
 	                if [ $? -eq 0 ]
 				 then
-					 echo "                  poly(A) reads processed" >> "$ovalue"/"$Condition".txt
+					 echo "poly(A) reads processed" >> "$ovalue"/"$Condition".txt
 						else   
-							echo "                  poly(A) read processing failed "$index" " >> "$ovalue"/"$Condition".txt
+							echo "poly(A) read processing failed "$index" " >> "$ovalue"/"$Condition".txt
 							 exit 1  
 				fi      
 																								                   
@@ -573,7 +572,7 @@ printf "\n" >> "$ovalue"/"$Condition".txt
 
 		if [ $? -eq 0 ]
 		               then
-				         echo ""
+				         echo "bedtools merge finished, output files stored in ${QUANT_MAP}/polyAreads_polyAremoved_pooled_slamdunk_mapped_filtered_bamTobed_minusStrand_countsUnique_greaterThan${threshold}.bed_sorted_merged.bed"
 			else
 				echo " ERR: bedtools merge failed">> "$ovalue"/"$Condition".txt
 				 exit 1  
@@ -585,9 +584,9 @@ printf "\n" >> "$ovalue"/"$Condition".txt
  
 		if [ $? -eq 0 ]
 		               then
-				         echo ""
-			else
-				echo " ERR: bedtools merge failed">> "$ovalue"/"$Condition".txt
+			       echo "bedtools merge finished, output files stored in ${QUANT_MAP}/polyAreads_polyAremoved_pooled_slamdunk_mapped_filtered_bamTobed_plusStrand_countsUnique_greaterThan${threshold}.bed_sorted_merged.bed"
+			       else
+			       echo " ERR: bedtools merge failed">> "$ovalue"/"$Condition".txt
 				 exit 1  
 		fi
 
